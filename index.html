@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sectoare Plutonul 5 - CNMDC</title>
+    <style>
+        :root {
+            --primary: #002b49;
+            --accent: #d4af37;
+            --bg: #f4f6f9;
+            --danger: #d9534f;
+            --success: #28a745;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 22px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .login-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #eef2f5;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+        .sector-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+        }
+        .sector-title {
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .btn {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .btn-claim {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-claim:hover {
+            background-color: #00406c;
+        }
+        .btn-release {
+            background-color: var(--danger);
+            color: white;
+        }
+        .btn-release:hover {
+            background-color: #c9302c;
+        }
+        .btn-disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            border: 1px solid #ced4da;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Plutonul 5 (9 E)</h1>
+    <div class="subtitle">Rezervare Sectoare - CNMDC</div>
+
+    <div class="login-box">
+        <label for="studentName"><strong>Nume și Prenume:</strong></label>
+        <input type="text" id="studentName" placeholder="Ex: Andrei Trifanov" oninput="saveName()">
+    </div>
+
+    <div id="sectorsList">
+        <!-- Sectoarele se încarcă dinamic -->
+    </div>
+</div>
+
+<script>
+    const defaultSectors = [
+        { id: "cam1", name: "Sector Camera #1", takenBy: null },
+        { id: "cam2", name: "Sector Camera #2", takenBy: null },
+        { id: "cam3", name: "Sector Camera #3", takenBy: null },
+        { id: "cam4", name: "Sector Camera #4", takenBy: null },
+        { id: "ext1", name: "Sector Exterior #1", takenBy: null },
+        { id: "ext2", name: "Sector Exterior #2", takenBy: null },
+        { id: "ext3", name: "Sector Exterior #3", takenBy: null },
+        { id: "ext4", name: "Sector Exterior #4", takenBy: null },
+        { id: "hol", name: "Sector Hol", takenBy: null },
+        { id: "spalator", name: "Sector Spălător", takenBy: null },
+        { id: "buda", name: "Sector Baie / WC", takenBy: null },
+        { id: "magazie", name: "Sector Magazie Bagaje", takenBy: null },
+        { id: "platforma", name: "Sector Platformă", takenBy: null },
+        { id: "paraclis1", name: "Sector Paraclis #1", takenBy: null },
+        { id: "paraclis2", name: "Sector Paraclis #2", takenBy: null }
+    ];
+
+    // Restaurare nume salvat local
+    document.getElementById("studentName").value = localStorage.getItem("my_student_name") || "";
+
+    function saveName() {
+        const name = document.getElementById("studentName").value.trim();
+        localStorage.setItem("my_student_name", name);
+        renderSectors();
+    }
+
+    function renderSectors() {
+        const container = document.getElementById("sectorsList");
+        container.innerHTML = "";
+
+        const savedData = JSON.parse(localStorage.getItem("pluton5_sectoare")) || defaultSectors;
+        const currentName = document.getElementById("studentName").value.trim();
+
+        // Verificăm dacă utilizatorul curent are deja un sector ales
+        const userHasSector = savedData.some(s => s.takenBy && s.takenBy.toLowerCase() === currentName.toLowerCase() && currentName !== "");
+
+        savedData.forEach((sector, index) => {
+            const card = document.createElement("div");
+            card.className = "sector-card";
+
+            let actionArea = "";
+
+            if (sector.takenBy) {
+                // Dacă sectorul e ales de utilizatorul curent
+                if (currentName !== "" && sector.takenBy.toLowerCase() === currentName.toLowerCase()) {
+                    actionArea = `<button class="btn btn-release" onclick="releaseSector(${index})">Renunță / Schimbă</button>`;
+                } else {
+                    // Dacă e ocupat de altcineva
+                    actionArea = `<button class="btn btn-disabled" disabled>Ocupat: ${sector.takenBy}</button>`;
+                }
+            } else {
+                // Sectorul este liber
+                if (userHasSector) {
+                    actionArea = `<button class="btn btn-disabled" disabled>Ai deja un sector</button>`;
+                } else {
+                    actionArea = `<button class="btn btn-claim" onclick="claimSector(${index})">Alege</button>`;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="sector-title">${sector.name}</div>
+                <div>${actionArea}</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function claimSector(index) {
+        const nameInput = document.getElementById("studentName").value.trim();
+        if (!nameInput) {
+            alert("Te rog să îți treci numele mai întâi!");
+            return;
+        }
+
+        let savedData = JSON.parse(localStorage.getItem("pluton5_sectoare")) || defaultSectors;
+
+        if (savedData[index].takenBy) {
+            alert("Acest sector a fost ocupat între timp!");
+            renderSectors();
+            return;
+        }
+
+        savedData[index].takenBy = nameInput;
+        localStorage.setItem("pluton5_sectoare", JSON.stringify(savedData));
+
+        renderSectors();
+    }
+
+    function releaseSector(index) {
+        let savedData = JSON.parse(localStorage.getItem("pluton5_sectoare")) || defaultSectors;
+        
+        savedData[index].takenBy = null;
+        localStorage.setItem("pluton5_sectoare", JSON.stringify(savedData));
+
+        renderSectors();
+    }
+
+    renderSectors();
+</script>
+
+</body>
+</html>
